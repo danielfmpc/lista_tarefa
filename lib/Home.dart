@@ -11,6 +11,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   List _list = [];
+  Map<String, dynamic> _ultimaTarefaRemovida = Map();
   TextEditingController _controllerTarefa = TextEditingController();
 
   Future<File> _getFile() async {
@@ -46,6 +47,59 @@ class _HomeState extends State<Home> {
     }
   }
 
+  Widget criarItemLista(context, index){
+    // final item = _list[index]["titulo"] +;
+    return Dismissible(
+      key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction){
+
+        _ultimaTarefaRemovida = _list[index];
+
+        _list.removeAt(index);
+        _salvarArquivo();
+
+        final snackbar = SnackBar(
+          // backgroundColor: Colors.green,
+          duration: Duration(seconds: 5),
+          content: Text("Removida"),
+          action: SnackBarAction(
+            label: "Desfazer",
+            onPressed: (){
+
+              setState(() {
+                _list.insert(index, _ultimaTarefaRemovida);
+              });
+
+              _salvarArquivo();
+            },
+          ),
+        );
+        Scaffold.of(context).showSnackBar(snackbar);
+      },
+      background: Container(
+        color: Colors.red,
+        padding: EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Icon(Icons.delete, color: Colors.white,),            
+          ],
+        ),
+      ),
+      child: CheckboxListTile(
+        title: Text(_list[index]["titulo"]),
+        value: _list[index]["realizada"],
+        onChanged: (valorAlterado){
+          setState(() {
+            _list[index]["realizada"] = valorAlterado;                        
+          });
+          _salvarArquivo();
+        },
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,40 +112,26 @@ class _HomeState extends State<Home> {
   
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Tarefas"),
         backgroundColor: Colors.purple,
       ),
+
       body: Container(
         child: Column(
           children: <Widget>[            
             Expanded(
               child: ListView.builder(
                 itemCount: _list.length,
-                itemBuilder: (context, index){
-                  return CheckboxListTile(
-                    title: Text(_list[index]["titulo"]),
-                    value: _list[index]["realizada"],
-                    onChanged: (valorAlterado){
-                      setState(() {
-                        _list[index]["realizada"] = valorAlterado;                        
-                      });
-                      _salvarArquivo();
-                    },
-                  );
-
-                  /*
-                  return ListTile(
-                    title: Text(_list[index]["titulo"]),
-                  );
-                  */
-                },
+                itemBuilder: criarItemLista,
               ),
             ),
           ],
         ),
       ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       // floatingActionButton: FloatingActionButton.extends(
       floatingActionButton: FloatingActionButton(
